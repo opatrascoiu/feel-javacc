@@ -377,10 +377,9 @@ void primary_expression() :
 {}
 {
     literal() |
+    simple_positive_unary_test() |
     name() |
-    <PAREN_OPEN> expression() <PAREN_CLOSE> |
-    boxed_expression() |
-    simple_positive_unary_test()
+    <PAREN_OPEN> textual_expression() <PAREN_CLOSE>
  }
 
 void type() : 
