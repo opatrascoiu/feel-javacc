@@ -1,0 +1,443 @@
+options {
+    void LOOKAHEAD() : 
+{}
+{ 1;
+    void STATIC() : 
+{}
+{ false;
+}
+
+PARSER_BEGIN(FeelParser)
+
+public class FeelParser {
+}
+
+PARSER_END(FeelParser)
+
+SKIP : { " " }
+SKIP : { "\n" | "\r" | "\r\n" }
+
+TOKEN : /* Keywords */
+{
+    <NOT : "not" >
+    | <IF : "if" >
+    | <THEN : "then" >
+    | <ELSE : "else" >
+    | <FOR : "for" >
+    | <IN : "in" >
+    | <RETURN : "return" >
+    | <BETWEEN : "between" >
+    | <INSTANCE : "instance" >
+    | <OF : "of" >
+    | <SOME : "some" >
+    | <EVERY : "every" >
+    | <SATISFIES : "satisfies" >
+    | <NULL : "null" >
+    | <TRUE : "true" >
+    | <FALSE : "false" >
+    | <AND : "and" >
+    | <OR : "or" >
+    | <FUNCTION : "function" >
+    | <EXTERNAL : "external" >
+}
+
+TOKEN : /* Numbers and identifiers */
+{
+    <NUMBER : (<DIGIT>)+ >
+    | <#DIGIT : ["0" - "9"] >
+    | <ID : (<LETTER>+ >) >
+    | <#LETTER : ["a" - "z", "A" - "Z"] >
+    | <STRING : "\""
+                (
+                    "\\" ~[]       // any escaped character
+                    |              // or
+                    ~["\"", "\\"]  // any character except quote or backslash
+                )*
+                "\"" >
+}
+
+TOKEN : /* Separators and operators */
+{
+    <PAREN_OPEN : "(" >
+    | <PAREN_CLOSE  : ")" >
+    | <BRACKET_OPEN  : "[" >
+    | <BRACKET_CLOSE  : "]" >
+    | <BRACE_OPEN  : "{" >
+    | <BRACE_CLOSE  : "}" >
+    | <LT  : "<" >
+    | <LE  : "<=" >
+    | <GT  : ">" >
+    | <GE  : ">=" >
+    | <EQ  : "=" >
+    | <NE  : "!=" >
+    | <MINUS  : "-" >
+    | <PLUS  : "+" >
+    | <STAR  : "" >
+    | <FORWARD_SLASH  : "/" >
+    | <STAR_STAR  : "**" >
+    | <DOT_DOT  : ".." >
+    | <DOT  : "." >
+    | <COLON  : ":" >
+    | <COMMA  : "," >
+}
+
+TOKEN : /* Anything not recognized so far */
+{
+    < OTHER : ~[]
+}
+
+void expression()() : 
+{}
+{
+	boxed_expression() |
+	| textual_expression()
+}
+
+void textual_expression() : 
+{}
+{
+	for_expression() | if_expression() | quantified_expression() |
+	| disjunction() |
+	| conjunction() |
+	| comparison() |
+	| arithmetic_expression() |
+	| instance_of() |
+	| path_expression() | filter_expression() | function_invocation() |
+	| literal() | simple_positive_unary_test() | name() | <PAREN_OPEN> textual_expression() <PAREN_CLOSE>
+}
+
+void textual_expressions() :
+{}
+{ 
+    textual_expression() ( <COMMA> textual_expression() )*
+}
+ 
+void arithmetic_expression()() : 
+{}
+{
+	addition() | subtraction() |
+	| multiplication() | division() |
+	| exponentiation() |
+	| arithmetic_negation()
+}
+
+void simple_expression() : 
+{}
+{ 
+    arithmetic_expression() | simple_value()
+}
+ 
+void simple_expressions() : 
+{}
+{ 
+    simple_expression() ( <COMMA> simple_expression() )*
+}
+ 
+void simple_positive_unary_test()() : 
+{}
+{
+	[ <LT> | <LE> | <GT> | <GE> ] endpoint()
+	| interval()
+}
+
+void interval() : 
+{}
+{ 
+    ( open_interval_start() | closed_interval_start() ) endpoint() <DOT_DOT> endpoint() ( open_interval_end() | closed_interval_end() )
+}
+
+void open_interval_start() : 
+{}
+{ 
+    <PAREN_OPEN> | <BRACKET_CLOSE>
+}
+
+void closed_interval_start() : 
+{}
+{ 
+    <BRACKET_OPEN>
+}
+
+void open_interval_end() : 
+{}
+{  
+    <PAREN_CLOSE> | <BRACKET_OPEN>
+}
+
+void closed_interval_end() : 
+{}
+{ 
+    <BRACKET_CLOSE>
+}
+
+void simple_positive_unary_tests() : 
+{}
+{ 
+    simple_positive_unary_test() ( <COMMA> simple_positive_unary_test() )*
+}
+ 
+void simple unary tests() : 
+{}
+{
+	simple_positive_unary_tests()
+	| <NOT> <PAREN_OPEN> simple_positive_unary_tests() <PAREN_CLOSE>
+	| <MINUS>
+}
+
+void positive_unary_test() : 
+{}
+{ 
+    expression()
+}
+
+void positive_unary_tests() : 
+{}
+{ 
+    positive_unary_test() { <COMMA> positive_unary_test() }
+}
+ 
+void unary tests() : 
+{}
+{
+	positive_unary_tests() |
+	| <NOT> <PAREN_OPEN> positive_unary_tests() <PAREN_CLOSE>
+	| <MINUS>
+}
+	
+void endpoint() : 
+{}
+{ 
+    simple_value()
+}
+
+void simple_value() : 
+{}
+{ 
+    qualified name() | simple literal()
+}
+
+void qualified name() : 
+{}
+{ 
+    name() ( <DOT> name() )*
+}
+
+void addition() : 
+{}
+{ 
+    expression() <PLUS> expression()
+}
+
+void subtraction() : 
+{}
+{ 
+    expression() <MINUS> expression()
+}
+
+void multiplication() : 
+{}
+{ 
+    expression() <STAR> expression()
+}
+
+void division() : 
+{}
+{ 
+    expression() <FORWARD_SLASH> expression()
+}
+
+void exponentiation() : 
+{}
+{ 
+    expression() <STAR_STAR> expression()
+}
+
+void arithmetic_negation() : 
+{}
+{ 
+    <MINUS> expression()
+}
+
+void name() : 
+{}
+{ 
+    <ID>
+}
+
+void literal() : 
+{}
+{ 
+    simple_literal() | <NULL>
+}
+
+void simple_literal()() : 
+{}
+{ 
+    numeric_literal() | string_literal() | boolean_literal() | date_time_literal()
+}
+
+void string_literal() : 
+{}
+{ 
+    <STRING>
+}
+
+void boolean_literal()() : 
+{}
+{ 
+    <TRUE> | <FALSE>
+}
+
+void numeric_literal() : 
+{}
+{ 
+    <NUMBER>
+}
+
+void function_invocation() : 
+{}
+{ 
+    expression() parameters()
+}
+
+void parameters() : 
+{}
+{ 
+    <PAREN_OPEN> ( named_parameters() | positional_parameters() ) <PAREN_CLOSE>
+}
+
+void named_parameters() : 
+{}
+{ 
+    parameter_name() <COLON> expression() ,
+    ( <COMMA> parameter_name() <COLON> expression() )*
+}
+
+void parameter_name() :
+{}
+{ 
+    name()
+}
+
+void positional_parameters() : 
+{}
+{ 
+    [ expression() ( <COMMA> expression() )* ]
+}
+
+void path_expression() :
+{}
+{ 
+    expression() <DOT> name()
+}
+
+void for_expression() : 
+{}
+{ 
+    <FOR> name() <IN> iteration_context() ( <COMMA> name() <IN> iteration_context() )* <RETURN> expression()
+}
+
+void if_expression() : 
+{}
+{ 
+    <if> expression() <THEN> expression() <ELSE> expression()
+}
+
+void quantified_expression() : 
+{}
+{ 
+    (<SOME> | <EVERY>) name() <IN> expression() ( <COMMA> name() <IN> expression() )* <SATISFIES> expression()
+}
+
+void disjunction() :
+{}
+{ 
+    expression() <OR> expression()
+}
+
+void conjunction() :
+{}
+{ 
+    expression() <AND> expression()
+}
+
+void comparison() :
+{}
+{
+	expression() ( <EQ> | <DOT_DOT> | <LT> | <LE> | <GT> | <GE> ) expression() |
+	| expression() <BETWEEN> expression() <AND> expression() |
+	| expression() <DOT_DOT> positive_unary_test()
+	| expression() <DOT_DOT> <DOT_DOT>, positive_unary_tests(), <PAREN_CLOSE>
+}
+
+void filter_expression() : 
+{}
+{ 
+    expression() <BRACKET_OPEN> expression() <BRACKET_CLOSE>
+}
+
+void instance_of() : 
+{}
+{ 
+    expression() <INSTANCE> <OF> type()
+}
+
+void type() : 
+{}
+{ 
+    qualified name()
+}
+
+void boxed_expression() : 
+{}
+{ 
+    list() | function_definition() | context()
+}
+
+void list() : 
+{}
+{ 
+    <BRACKET_OPEN> [ expression() { <COMMA> expression() } ] <BRACKET_CLOSE>
+}
+
+void function_definition() : 
+{}
+{ 
+    <FUNCTION> <PAREN_OPEN> [ formal_parameter() { <COMMA> formal_parameter() } ] <PAREN_CLOSE> [ <EXTERNAL> ] expression()
+}
+
+void formal_parameter() : 
+{}
+{ 
+    parameter_name() [<COLON> type() ]
+}
+
+void context() : 
+{}
+{ 
+    <BRACE_OPEN> [context_entry() { <COMMA> context_entry() } ] <BRACE_CLOSE>
+}
+
+void context_entry() : 
+{}
+{ 
+    key <COLON> expression()
+}
+
+void key() : 
+{}
+{ 
+    name() | string_literal()
+}
+
+void date_time_literal()() : 
+{}
+{ 
+    function_invocation();
+}
+    
+void iteration_context() : 
+{}
+{ 
+    expression(), [ <DOT_DOT> expression() ];
+}
