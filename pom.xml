@@ -27,7 +27,7 @@
                         <configuration>
                             <sourceDirectory>${project.basedir}/src/main/resources/</sourceDirectory>
                             <includes>
-                                <include>feel-specification-1.jj</include>
+                                <include>feel-12.jj</include>
                             </includes>
                             <outputDirectory>${project.build.directory}/generated-sources/</outputDirectory>
                         </configuration>

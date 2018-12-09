@@ -1,5 +1,5 @@
 options {
-    LOOKAHEAD = 1;
+    LOOKAHEAD = 3;
     STATIC = false;
 }
 
@@ -93,13 +93,7 @@ void textual_expression() :
 {}
 {
 	for_expression() | if_expression() | quantified_expression() |
-	disjunction() |
-	conjunction() |
-	comparison() |
-	arithmetic_expression() |
-	instance_of() |
-	path_expression() | filter_expression() | function_invocation() |
-	literal() | simple_positive_unary_test() | name() | <PAREN_OPEN> textual_expression() <PAREN_CLOSE>
+	disjunction()
 }
 
 void textual_expressions() :
@@ -111,10 +105,7 @@ void textual_expressions() :
 void arithmetic_expression() :
 {}
 {
-	addition() | subtraction() |
-	multiplication() | division() |
-	exponentiation() |
-	arithmetic_negation()
+	addition()
 }
 
 void simple_expression() : 
@@ -223,37 +214,25 @@ void qualified_name() :
 void addition() : 
 {}
 { 
-    expression() <PLUS> expression()
+    multiplication() ( [ <PLUS> | <MINUS> ] multiplication() )*
 }
 
-void subtraction() : 
+void multiplication() :
 {}
 { 
-    expression() <MINUS> expression()
+    exponentiation() ( <STAR> | <FORWARD_SLASH> exponentiation() )*
 }
 
-void multiplication() : 
+void exponentiation() :
 {}
 { 
-    expression() <STAR> expression()
-}
-
-void division() : 
-{}
-{ 
-    expression() <FORWARD_SLASH> expression()
-}
-
-void exponentiation() : 
-{}
-{ 
-    expression() <STAR_STAR> expression()
+    arithmetic_negation() ( <STAR_STAR> arithmetic_negation() )*
 }
 
 void arithmetic_negation() : 
 {}
 { 
-    <MINUS> expression()
+    [ <MINUS> ] instance_of()
 }
 
 void name() : 
@@ -350,22 +329,25 @@ void quantified_expression() :
 void disjunction() :
 {}
 { 
-    expression() <OR> expression()
+    conjunction() ( <OR> conjunction() )*
 }
 
 void conjunction() :
 {}
 { 
-    expression() <AND> expression()
+    comparison() ( <AND> comparison() )*
 }
 
 void comparison() :
 {}
 {
-	expression() ( <EQ> | <DOT_DOT> | <LT> | <LE> | <GT> | <GE> ) expression() |
-	expression() <BETWEEN> expression() <AND> expression() |
-	expression() <IN> positive_unary_test() |
-	expression() <IN> <PAREN_OPEN> positive_unary_tests() <PAREN_CLOSE>
+	arithmetic_expression()
+	(
+	    ( <EQ> | <DOT_DOT> | <LT> | <LE> | <GT> | <GE> ) arithmetic_expression() |
+	    <BETWEEN> expression() <AND> expression() |
+	    <IN> positive_unary_test() |
+	    <IN> <PAREN_OPEN> positive_unary_tests() <PAREN_CLOSE>
+	)?
 }
 
 void filter_expression() : 
@@ -376,9 +358,30 @@ void filter_expression() :
 
 void instance_of() : 
 {}
-{ 
-    expression() <INSTANCE> <OF> type()
+{
+    postfix_expression() [ <INSTANCE> <OF> type() ]
 }
+
+void postfix_expression() :
+{}
+{
+    primary_expression()
+    (
+        <BRACKET_OPEN> expression() <BRACE_CLOSE> |
+        parameters() |
+        <DOT> name()
+    )?
+}
+
+void primary_expression() :
+{}
+{
+    literal() |
+    name() |
+    <PAREN_OPEN> expression() <PAREN_CLOSE> |
+    boxed_expression() |
+    simple_positive_unary_test()
+ }
 
 void type() : 
 {}
@@ -431,7 +434,7 @@ void key() :
 void date_time_literal() :
 {}
 { 
-    function_invocation()
+    name() <PAREN_OPEN> string_literal() <PAREN_CLOSE>
 }
     
 void iteration_context() : 
