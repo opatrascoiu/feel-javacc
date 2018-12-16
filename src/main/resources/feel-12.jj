@@ -1,5 +1,6 @@
 options {
     LOOKAHEAD = 3;
+    FORCE_LA_CHECK = true;
     STATIC = false;
 }
 
@@ -268,7 +269,7 @@ void boolean_literal() :
 void numeric_literal() : 
 {}
 { 
-    <NUMBER>
+    [<MINUS>] <NUMBER>
 }
 
 void function_invocation() : 
@@ -350,13 +351,7 @@ void comparison() :
 	)?
 }
 
-void filter_expression() : 
-{}
-{ 
-    expression() <BRACKET_OPEN> expression() <BRACKET_CLOSE>
-}
-
-void instance_of() : 
+void instance_of() :
 {}
 {
     postfix_expression() [ <INSTANCE> <OF> type() ]
@@ -367,10 +362,10 @@ void postfix_expression() :
 {
     primary_expression()
     (
-        <BRACKET_OPEN> expression() <BRACE_CLOSE> |
+        <BRACKET_OPEN> expression() <BRACKET_CLOSE> |
         parameters() |
         <DOT> name()
-    )?
+    )*
 }
 
 void primary_expression() :

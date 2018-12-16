@@ -289,7 +289,7 @@ void boolean_literal() :
 void numeric_literal() : 
 {}
 { 
-    <NUMBER>
+    [<MINUS>] <NUMBER>
 }
 
 void function_invocation() : 
