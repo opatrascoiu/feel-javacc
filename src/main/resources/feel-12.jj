@@ -344,7 +344,7 @@ void comparison() :
 {
 	arithmetic_expression()
 	(
-	    ( <EQ> | <DOT_DOT> | <LT> | <LE> | <GT> | <GE> ) arithmetic_expression() |
+	    ( <EQ> | <NE> | <LT> | <LE> | <GT> | <GE> ) arithmetic_expression() |
 	    <BETWEEN> expression() <AND> expression() |
 	    <IN> positive_unary_test() |
 	    <IN> <PAREN_OPEN> positive_unary_tests() <PAREN_CLOSE>
